@@ -1,0 +1,50 @@
+# Sharepoint Sync Tool
+
+This tool can sync Sharepoint (and OneDrive for Business) document libraries
+with local filesystems.
+
+## Requirements
+- Tested on Python 3.6.
+- Should work on Python 3.4+, may work on Python 2.7.
+- Requires Office365-REST-Python-Client
+
+## Usage
+
+The first time you sync a site, do this:
+
+    obsync.py -u me@myorg.com ./LocalPath 'https://mysharepoint.sharepoint.com/sites/SiteName/' 'Remote Path'
+
+This will ask you for a password; you can also specify `--pw=MyPassword` on the
+command-line if you're okay with your password ending up in your command
+history.
+
+The last parameter, the remote path, can be either:
+
+- An absolute path such as `/sites/MySite/Shared Documents`; or
+- A path relative to your site, such as `Shared Documents`.
+
+`Shared Documents` is the usual name of the document library on a site but you
+can sync whatever folder on the SharePoint site you like.
+
+Note that the `Shared Documents` folder commonly contains a `Forms` folder which
+most clients hide but this one doesn't.  Its contents are more about how
+Sharepoint works than your document library.
+
+Subsequently, you can do this:
+
+    obsync.py ./LocalPath
+
+though if you want to put the whole command-line again, you can.
+
+## Notes
+
+The tool maintains a database in `./LocalPath/.sync.db`.  Don't mess with it.
+
+Your password is stored in plain text in the database.
+
+### TODOs
+
+ - Store the authentication token in the database and only request a new one
+   when it doesn't work.
+ - Add a command-line option to not store the password in the database and
+   request it every time it's needed.
