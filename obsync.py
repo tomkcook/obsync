@@ -25,7 +25,7 @@ if not args.server:
 if not args.server:
     parser.print_help()
     exit()
-print(args)
+
 if not args.pw:
     args.pw = getpass()
 
