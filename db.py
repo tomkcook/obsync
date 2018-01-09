@@ -53,7 +53,8 @@ and fs.file_path is not null
 '''
 
 class DB():
-    def __init__(self, path, sp_f):
+    def __init__(self, path, sp_f, dry_run):
+        self.dry_run = dry_run
         self.path = Path(path)
         self.db_path = self.path / '.sync.db'
         self.sp_f = sp_f
@@ -127,6 +128,8 @@ class DB():
 
     def sync_to_sp(self, row):
         print(' < + Sync to Remote: {}'.format(row[0]))
+        if self.dry_run:
+            return
         local_p = self.path / row[0]
         if local_p.is_dir():
             self.sp_f.sp.create_folder(self.sp_f.path / row[0])
@@ -136,6 +139,8 @@ class DB():
 
     def sync_to_fs(self, row):
         print(' > + Sync to Local: {}'.format(row[0]))
+        if self.dry_run:
+            return
         local_p = self.path / row[0]
         try:
             file = self.sp_f.sp.get_file(self.sp_f.path / row[0])
@@ -172,6 +177,8 @@ class DB():
 
     def unlink_from_fs(self, row):
         print(' > - Deleted from Remote: {}'.format(row[0]))
+        if self.dry_run:
+            return
         local_p = self.path / row[0]
         if local_p.exists():
             if local_p.is_dir():
@@ -184,6 +191,8 @@ class DB():
 
     def unlink_from_sp(self, row):
         print(' < - Deleted from Local: {}'.format(row[0]))
+        if self.dry_run:
+            return
         try:
             if row[3]:
                 file = self.sp_f.sp.get_folder(self.sp_f.path / row[0])

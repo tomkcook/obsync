@@ -12,6 +12,7 @@ parser.add_argument('server', nargs='?')
 parser.add_argument('remote_path', nargs='?')
 parser.add_argument('--username', '-u', nargs='?')
 parser.add_argument('--pw', '-p', type=str)
+parser.add_argument('--dry-run', '-d')
 args = parser.parse_args()
 
 if not args.server:
@@ -34,5 +35,5 @@ print('Syncing server {username}@{server}\nLocal path: {local_path}\nRemote path
 sp = SharePoint(args.server, args.username, args.pw)
 
 f = sp.get_folder(args.remote_path)
-d = DB(args.local_path, f)
+d = DB(args.local_path, f, args.dry_run)
 d.sync()

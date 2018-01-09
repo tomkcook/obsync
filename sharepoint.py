@@ -8,9 +8,9 @@ from office365.runtime.client_request import ClientRequest
 from office365.runtime.utilities.request_options import RequestOptions
 from office365.runtime.utilities.http_method import HttpMethod
 
-def quote_plus(s):
+def quote_file(s):
     if isinstance(s, Path):
-        return s
+        return str(s).replace("'", "''")
     return s.replace("'", "''")
 
 def authenticate(fn):
@@ -43,7 +43,7 @@ class File(FFItem):
     def __init__(self, sp, path, parent=None, data=None):
         self.sp = sp
         if data is None:
-            self.data = self.sp.get("GetFileByServerRelativeUrl('{}')".format(path))
+            self.data = self.sp.get("GetFileByServerRelativeUrl('{}')".format(quote_file(path)))
         else:
             self.data = data
         try:
@@ -63,7 +63,7 @@ class File(FFItem):
 
     def read(self, size=1024):
         return self.sp.get_raw("GetFileByServerRelativeUrl('{}')/$value?binaryStringResponseBody=true"
-                            .format(self.data['ServerRelativeUrl'])
+                            .format(quote_file(self.data['ServerRelativeUrl']))
         ).iter_content(chunk_size=size)
 
     @property
@@ -75,7 +75,7 @@ class Folder(FFItem):
         self.sp = sp
         self.parent_obj = parent
         if data is None:
-            self.data = self.sp.get("GetFolderByServerRelativeUrl('{}')".format(path))
+            self.data = self.sp.get("GetFolderByServerRelativeUrl('{}')".format(quote_file(path)))
         else:
             self.data = data
         try:
@@ -84,18 +84,20 @@ class Folder(FFItem):
             raise FileNotFoundError(path)
 
     def __iter__(self):
-        data = self.sp.get("GetFolderByServerRelativeUrl('{}')?$expand=Folders,Files".format(self.path))
+        data = self.sp.get("GetFolderByServerRelativeUrl('{}')?$expand=Folders,Files".format(quote_file(self.path)))
         if 'Folders' not in data:
+            import traceback
+            traceback.print_stack()
             pprint(data)
-        children = ([Folder(self.sp, f['ServerRelativeUrl'], self, f) for f in data['Folders']] +
-                    [File(self.sp, f['ServerRelativeUrl'], self, f) for f in data['Files']])
+        children = ([Folder(self.sp, quote_file(f['ServerRelativeUrl']), self, f) for f in data['Folders']] +
+                    [File(self.sp, quote_file(f['ServerRelativeUrl']), self, f) for f in data['Files']])
         return children.__iter__()
 
     def __getitem__(self, name):
         path = Path(self.data['ServerRelativeUrl']) / name
-        data = self.sp.get("GetFolderByServerRelativeUrl('{}')".format(path))
+        data = self.sp.get("GetFolderByServerRelativeUrl('{}')".format(quote_file(path)))
         if 'odata.error' in data:
-            data = self.sp.get("GetFileByServerRelativeUrl('{}')".format(path))
+            data = self.sp.get("GetFileByServerRelativeUrl('{}')".format(quote_file(path)))
         else:
             return Folder(self.sp, path, self, data)
         if 'odata.error' in data:
@@ -155,6 +157,8 @@ class SharePoint():
             options.data.update(data)
         data = self.request.execute_request_direct(options)
         if data.status_code == 403:
+            import traceback
+            traceback.print_tb()
             print(options.url)
             print(data.content)
             print(options.headers)
@@ -169,6 +173,8 @@ class SharePoint():
         options.data = data
         data = self.request.execute_request_direct(options)
         if data.status_code == 403:
+            import traceback
+            traceback.print_tb()
             print(options.url)
             print(data.content)
             print(options.headers)
@@ -183,10 +189,10 @@ class SharePoint():
         return self.get('lists')
 
     def get_list(self, name):
-        return self.get("lists/getbytitle('{}')".format(quote_plus(name)))
+        return self.get("lists/getbytitle('{}')".format(quote_file(name)))
 
     def get_list_items(self, name):
-        return self.get("lists/getbytitle('{}')/Items".format(quote_plus(name)))
+        return self.get("lists/getbytitle('{}')/Items".format(quote_file(name)))
 
     def get_folder(self, path):
         return Folder(self, path, None)
@@ -202,14 +208,14 @@ class SharePoint():
 
     def delete(self, path, is_folder=False):
         form_digest = self.get_digest()
-        return self.post("Get{}ByServerRelativeUrl('{}')".format('Folder' if is_folder else 'File', path),
+        return self.post("Get{}ByServerRelativeUrl('{}')".format('Folder' if is_folder else 'File', quote_file(path)),
             headers = { 'X-RequestDigest': form_digest,
                         'IF-MATCH': 'etag or "*"',
                         'X-HTTP-Method': 'DELETE'})
 
     def create_file(self, path, f, size):
         form_digest = self.get_digest()
-        return self.post("GetFolderByServerRelativeUrl('{}')/Files/add(url='{}', overwrite=true)".format(path.parent, path.name),
+        return self.post("GetFolderByServerRelativeUrl('{}')/Files/add(url='{}', overwrite=true)".format(quote_file(path.parent), quote_file(path.name)),
             headers = { 'X-RequestDigest': form_digest,
                         'Content-Length': str(size)},
             data = f)
