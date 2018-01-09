@@ -44,10 +44,17 @@ Your password is stored in plain text in the database.
 
 ### TODOs
 
+ - The list of files on the sharepoint site is currently fetched by enumerating
+   all files and folders in each directory.  This means there is one request
+   for each folder in the tree.  This should be replaced with listing all the
+   files in the `Documents` list on the sharepoint site and filtering for the
+   root path.  Such requests have a limit of 5,000 items returned for each
+   request, but it is still almost certain to involve many fewer requests.
  - Store the authentication token in the database and only request a new one
    when it doesn't work.
  - Add a command-line option to not store the password in the database and
    request it every time it's needed.
+ - Sync files in parallel.
 
 ## Other bits and bobs
 
