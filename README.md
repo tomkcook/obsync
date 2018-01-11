@@ -6,7 +6,7 @@ with local filesystems.
 ## Requirements
 - Tested on Python 3.6.
 - Should work on Python 3.4+, may work on Python 2.7.
-- Requires Office365-REST-Python-Client (currently requires the version at https://github.com/tomkcook/Office365-REST-Python-Client but this may change if pull requests are accepted by the upstream project).
+- Requires Office365-REST-Python-Client (currently requires installation from git after commit 36dd598f416676876634cd38228b75e3323d9cc8 but this will change when the version in PyPI is updated).
 
 ## Usage
 
